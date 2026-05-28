@@ -34,11 +34,12 @@ public class JpaAccountAdapter implements AccountRepository {
         e.setId(a.getId());
         e.setName(a.getName());
         e.setBalance(a.getBalance());
+        e.setVersion(a.getVersion());
         return e;
     }
 
     private Account toDomain(AccountEntity e) {
-        Account a = new Account(e.getId(), e.getName(), e.getBalance());
+        Account a = new Account(e.getId(), e.getName(), e.getBalance(), e.getVersion() == null ? 0L : e.getVersion());
         return a;
     }
 }
