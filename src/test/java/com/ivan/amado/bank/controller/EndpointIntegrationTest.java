@@ -9,6 +9,7 @@ import com.ivan.amado.bank.repository.IdempotencyRepository;
 import com.ivan.amado.bank.repository.TransferRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -168,5 +169,39 @@ class EndpointIntegrationTest {
         mockMvc.perform(get("/accounts/" + from).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.balance").value(900.00));
+    }
+
+    @Test
+    void deve_processar_idempotencia_via_query_param() throws Exception {
+        UUID from = createAccount("Jack", new BigDecimal("1000.00"));
+        UUID to   = createAccount("Kara", new BigDecimal("0.00"));
+
+        TransferRequest req = new TransferRequest();
+        req.setFromAccountId(from);
+        req.setToAccountId(to);
+        req.setAmount(new BigDecimal("100.00"));
+
+        String idempotencyKey = UUID.randomUUID().toString();
+
+        mockMvc.perform(post("/transfers?Idempotency-Key=" + idempotencyKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OK"));
+
+        // second call with same query param must be idempotent
+        mockMvc.perform(post("/transfers?Idempotency-Key=" + idempotencyKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OK"));
+
+        // balance should be debited only once
+        mockMvc.perform(get("/accounts/" + from).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance").value(900.00));
+
+        // repository should contain the idempotency key saved
+        assertTrue(idempotencyRepository.findById(idempotencyKey).isPresent(), "Idempotency key should be persisted");
     }
 }

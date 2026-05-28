@@ -83,7 +83,10 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.5</version>
 				<configuration>
-					<forkCount>0</forkCount>
+					<!-- Fork a JVM for tests and increase heap to avoid OOM during integration tests -->
+					<forkCount>1</forkCount>
+					<reuseForks>true</reuseForks>
+					<argLine>-Xmx1024m</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
