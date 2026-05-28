@@ -4,18 +4,23 @@ import com.ivan.amado.bank.application.port.input.TransferUseCase;
 import com.ivan.amado.bank.application.port.output.AccountRepository;
 import com.ivan.amado.bank.application.port.output.Notifier;
 import com.ivan.amado.bank.domain.model.Account;
+import com.ivan.amado.bank.infrastructure.persistence.entity.TransferEntity;
+import com.ivan.amado.bank.infrastructure.persistence.repository.TransferRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 import java.util.UUID;
+import java.time.Instant;
 
 @Service
 public class TransferUseCaseImpl implements TransferUseCase {
 
     private final AccountRepository accountRepository;
     private final Notifier notifier;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private TransferRepository transferRepository;
 
     @org.springframework.beans.factory.annotation.Autowired
     public TransferUseCaseImpl(AccountRepository accountRepository) {
@@ -56,6 +61,12 @@ public class TransferUseCaseImpl implements TransferUseCase {
 
         accountRepository.save(from);
         accountRepository.save(to);
+
+        // persist transfer record if repository is available
+        if (transferRepository != null) {
+            TransferEntity record = new TransferEntity(UUID.randomUUID(), fromAccountId, toAccountId, amount, Instant.now());
+            transferRepository.save(record);
+        }
 
         // send notifications
         notifier.notify(from.getId(), "Transfer sent: " + amount.toPlainString());
