@@ -132,7 +132,21 @@ O método `TransferService.transfer()` é anotado com `@Transactional`, garantin
 
 ### Teste de Concorrência
 
-A classe `TransferConcurrencyTest` prova o mecanismo com **10 threads simultâneas**:
+A classe `TransferConcurrencyTest` prova o mecanismo com **10 threads simultâneas**.
+
+Para executar isoladamente:
+
+```bash
+./mvnw test -Dtest=TransferConcurrencyTest
+```
+
+Saída esperada:
+```
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+```
+
+O teste dispara 10 threads simultâneas contra a mesma conta de origem. Colisões de versão são descartadas (comportamento esperado do Optimistic Locking) e as invariantes financeiras são validadas ao final.
 
 ```
 Conta origem:  R$ 1.000,00
