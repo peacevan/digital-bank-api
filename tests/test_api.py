@@ -20,6 +20,11 @@ class DigitalBankApiTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["balance"], 100)
 
+    def test_create_account_with_invalid_initial_balance(self):
+        response = self.client.post("/accounts", json={"name": "Alice", "initial_balance": "abc"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["error"], "initial_balance must be a valid number")
+
     def test_deposit_and_withdraw(self):
         account = self.create_account("Bob", 100)
 

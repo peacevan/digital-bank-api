@@ -33,9 +33,9 @@ def create_app() -> Flask:
         try:
             amount = float(amount)
         except (TypeError, ValueError):
-            return None, (jsonify({"error": "amount must be greater than zero"}), 400)
+            return None, (jsonify({"error": "amount must be a valid number greater than zero"}), 400)
         if amount <= 0:
-            return None, (jsonify({"error": "amount must be greater than zero"}), 400)
+            return None, (jsonify({"error": "amount must be a valid number greater than zero"}), 400)
         return amount, None
 
     @app.post("/accounts")
@@ -45,7 +45,10 @@ def create_app() -> Flask:
         if not name:
             return jsonify({"error": "name is required"}), 400
 
-        initial_balance = float(data.get("initial_balance", 0))
+        try:
+            initial_balance = float(data.get("initial_balance", 0))
+        except (TypeError, ValueError):
+            return jsonify({"error": "initial_balance must be a valid number"}), 400
         if initial_balance < 0:
             return jsonify({"error": "initial_balance cannot be negative"}), 400
 
