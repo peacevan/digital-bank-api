@@ -16,6 +16,35 @@ A arquitetura foi desenhada para atender os requisitos do teste técnico sem ove
 
 ---
 
+# Metodologia de Desenvolvimento
+
+O projeto foi desenvolvido com a abordagem **SDD + TDD**:
+
+## Specification-Driven Development (SDD)
+
+A implementação partiu de especificação prévia:
+
+1. Requisitos funcionais e não-funcionais documentados antes do código
+2. Decisões arquiteturais registradas em ADRs antes da implementação
+3. Contratos de API definidos (endpoints, DTOs, regras de negócio) como guia de desenvolvimento
+
+## Test-Driven Development (TDD)
+
+Os testes guiaram o design das classes:
+
+1. Testes unitários escritos antes ou junto com a implementação dos services
+2. Testes de controller validando contratos HTTP
+3. Testes de integração com H2 real validando o fluxo completo
+4. Teste de concorrência validando invariantes financeiras sob carga simultânea
+
+Essa abordagem garantiu:
+
+* design orientado ao comportamento esperado, não à implementação
+* cobertura de cenários positivos e negativos desde o início
+* refatorações seguras com feedback imediato dos testes
+
+---
+
 # ADR-001 — Revisão da Arquitetura: Hexagonal → MVC com Isolamento de Domínio
 
 ## Status
