@@ -17,6 +17,13 @@ public class Account {
         this.version = 0L;
     }
 
+    public Account(UUID id, String name, BigDecimal balance, long version) {
+        this.id = id;
+        this.name = name;
+        this.balance = balance;
+        this.version = version;
+    }
+
     public static Account of(String name, BigDecimal balance) {
         return new Account(UUID.randomUUID(), name, balance);
     }
