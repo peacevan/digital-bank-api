@@ -135,8 +135,8 @@ class EndpointIntegrationTest {
 
         mockMvc.perform(get("/transfers/account/" + from).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].fromAccountId").value(from.toString()))
-                .andExpect(jsonPath("$[0].amount").value(100.00));
+                .andExpect(jsonPath("$.content[0].fromAccountId").value(from.toString()))
+                .andExpect(jsonPath("$.content[0].amount").value(100.00));
     }
 
     @Test

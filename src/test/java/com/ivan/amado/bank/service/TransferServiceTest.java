@@ -29,6 +29,9 @@ class TransferServiceTest {
     @Mock
     TransferRepository transferRepository;
 
+    @Mock
+    NotificationService notificationService;
+
     @InjectMocks
     TransferService transferService;
 

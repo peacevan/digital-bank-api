@@ -72,9 +72,6 @@ class TransferControllerTest {
                 .when(transferService).transfer(from, to, new BigDecimal("1000.00"));
 
         when(idempotencyRepository.findById(org.mockito.ArgumentMatchers.any())).thenReturn(java.util.Optional.empty());
-        when(transferRepository.findByFromAccountIdOrToAccountIdOrderByCreatedAtDesc(
-                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
-                .thenReturn(List.of());
 
         mockMvc.perform(post("/transfers")
                 .contentType(MediaType.APPLICATION_JSON)

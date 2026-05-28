@@ -11,16 +11,18 @@ public class TransferRecord {
     private UUID toAccountId;
     private BigDecimal amount;
     private Instant createdAt;
+    private String direction;
 
     public TransferRecord() {
     }
 
-    public TransferRecord(UUID id, UUID fromAccountId, UUID toAccountId, BigDecimal amount, Instant createdAt) {
+    public TransferRecord(UUID id, UUID fromAccountId, UUID toAccountId, BigDecimal amount, Instant createdAt, String direction) {
         this.id = id;
         this.fromAccountId = fromAccountId;
         this.toAccountId = toAccountId;
         this.amount = amount;
         this.createdAt = createdAt;
+        this.direction = direction;
     }
 
     public UUID getId() { return id; }
@@ -37,4 +39,7 @@ public class TransferRecord {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public String getDirection() { return direction; }
+    public void setDirection(String direction) { this.direction = direction; }
 }

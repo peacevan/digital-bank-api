@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -24,10 +26,14 @@ public class TransferService {
 
     private final AccountRepository accountRepository;
     private final TransferRepository transferRepository;
+    private final NotificationService notificationService;
 
-    public TransferService(AccountRepository accountRepository, TransferRepository transferRepository) {
+    public TransferService(AccountRepository accountRepository,
+                           TransferRepository transferRepository,
+                           NotificationService notificationService) {
         this.accountRepository = accountRepository;
         this.transferRepository = transferRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -60,7 +66,21 @@ public class TransferService {
 
         transferRepository.save(new TransferEntity(UUID.randomUUID(), fromId, toId, amount, Instant.now()));
 
-        log.info("[NOTIFICATION] Transfer of {} from accountId={} to accountId={} completed",
+        log.info("Transfer of {} from accountId={} to accountId={} completed",
                 amount.toPlainString(), fromId, toId);
+
+        final UUID capturedFrom = fromId;
+        final UUID capturedTo = toId;
+        final BigDecimal capturedAmount = amount;
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    notificationService.sendTransferNotification(capturedFrom, capturedTo, capturedAmount);
+                }
+            });
+        } else {
+            notificationService.sendTransferNotification(capturedFrom, capturedTo, capturedAmount);
+        }
     }
 }

@@ -3,7 +3,8 @@
  
  
  2. Requisitos Funcionais A. Gestão de Contas (Simplificado) 
- * O sistema deve ter uma base pré-carregada de clientes ou permitir o cadastro básico (ID, Nome, Saldo Inicial). B. Transferência de Fundos 
+ * O sistema deve ter uma base pré-carregada de clientes ou permitir o cadastro básico (ID, Nome, Saldo Inicial). 
+ B. Transferência de Fundos 
  * O sistema deve transferir dinheiro entre duas contas. C. Notificações 
  * Após uma transferência ser concluída com sucesso, o sistema deve enviar uma notificação para o cliente.
 3. Requisitos Não Funcionais 
