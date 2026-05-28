@@ -20,7 +20,7 @@ O objetivo do projeto é demonstrar boas práticas de desenvolvimento backend em
 
 O projeto deve demonstrar:
 
-* Arquitetura Hexagonal
+* Arquitetura MVC em camadas com isolamento de domínio
 * Separação de responsabilidades
 * Isolamento do domínio
 * Regras de negócio desacopladas do framework
@@ -42,7 +42,7 @@ O projeto deve demonstrar:
 | Persistência          | Spring Data JPA        |
 | Documentação          | Swagger / OpenAPI      |
 | Testes                | JUnit 5 + Mockito      |
-| Arquitetura           | Hexagonal Architecture |
+| Arquitetura           | MVC em camadas         |
 | Controle de Qualidade | Sonar-ready            |
 
 ---
@@ -201,82 +201,80 @@ Aplicar:
 
 # Arquitetura
 
-O projeto deve seguir Arquitetura Hexagonal (Ports and Adapters).
+> **Nota de decisão:** A especificação original previa Arquitetura Hexagonal (Ports and Adapters).
+> Após análise do escopo do projeto, a decisão foi revisada para adotar **MVC em camadas com isolamento de domínio**.
+> O registro completo da decisão e seus motivos está em [`ARCHITECTURE_DECISIONS.md`](ARCHITECTURE_DECISIONS.md).
+
+O projeto adota **arquitetura MVC em camadas**, mantendo isolamento do domínio sem o overhead de ports e adapters.
 
 ---
 
 ## Camadas
 
+### Controller
+
+Responsável por:
+
+* receber e validar requisições HTTP
+* retornar responses padronizados
+* delegar lógica ao Service
+
+Sem regras de negócio.
+
+---
+
+### Service
+
+Responsável por:
+
+* regras de negócio
+* orquestração das operações
+* controle transacional (`@Transactional`)
+* concorrência
+
+---
+
+### Repository
+
+Responsável por:
+
+* persistência via Spring Data JPA
+* consultas ao banco H2
+
+Sem regras de negócio.
+
+---
+
 ### Domain
 
 Responsável por:
 
-* entidades
-* regras de negócio
-* value objects
-* exceções de domínio
-
-### Regras
-
-* sem dependência do Spring
-* sem dependência de infraestrutura
-* núcleo da aplicação
+* modelo de domínio puro (`Account`)
+* sem dependências do Spring ou de infraestrutura
 
 ---
 
-### Application
+### Exception
 
 Responsável por:
 
-* casos de uso
-* orquestração
-* interfaces (ports)
-* regras de aplicação
-
-### Componentes
-
-* input ports
-* output ports
-* use cases
-* services
-
----
-
-### Infrastructure
-
-Responsável por:
-
-* controllers REST
-* persistência
-* adapters
-* banco de dados
-* mensageria
-* configuração do framework
-
-### Componentes
-
-* JPA repositories
-* entities
-* adapters
-* controllers
-* exception handlers
+* `GlobalExceptionHandler` centralizado
+* exceções de domínio tipadas (`AccountNotFoundException`, `InsufficientFundsException`, `InvalidTransferException`)
 
 ---
 
 # Fluxo de Transferência
 
+```
 HTTP Request
-→ Controller
-→ Input Port
-→ Use Case
-→ Domain Service
-→ Output Port
-→ Persistence Adapter
-→ Database
+→ Controller (validação de entrada)
+→ Service (regras de negócio + @Transactional)
+→ Repository (Spring Data JPA)
+→ Entity / H2 Database
 
 Após sucesso:
-
-→ Notification Adapter
+→ log.info("[NOTIFICATION] ...") — notificação simulada
+```
 
 ---
 
@@ -398,6 +396,7 @@ O foco principal do projeto é demonstrar:
 * boas práticas backend
 * arquitetura limpa
 * isolamento de domínio
+
 * consistência transacional
 * qualidade de código
 * capacidade de modelagem de sistemas financeiros
