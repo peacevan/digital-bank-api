@@ -16,7 +16,65 @@ A arquitetura foi desenhada para atender os requisitos do teste técnico sem ove
 
 ---
 
-# Decisão Arquitetural
+# ADR-001 — Revisão da Arquitetura: Hexagonal → MVC com Isolamento de Domínio
+
+## Status
+
+**Aceito** (substitui a intenção original de Arquitetura Hexagonal)
+
+## Contexto
+
+A especificação original e o `CLAUDE.md` previam **Arquitetura Hexagonal (Ports & Adapters)** como padrão arquitetural do projeto.
+
+A Arquitetura Hexagonal é adequada para sistemas com:
+- múltiplos adapters de entrada e saída (REST, gRPC, mensageria, CLI)
+- necessidade de trocar implementações de infraestrutura sem alterar o domínio
+- times grandes com fronteiras claras entre domínio e infraestrutura
+- longa vida útil do sistema com alta previsão de mudanças tecnológicas
+
+## Problema identificado: Overengineering
+
+Para o escopo deste teste técnico, a adoção completa da Arquitetura Hexagonal geraria:
+
+| Problema | Impacto |
+|---|---|
+| Interfaces para cada porta (`AccountInputPort`, `AccountOutputPort`) | Abstrações sem valor real — um único adapter implementa cada interface |
+| Classes adapter duplicando lógica | `JpaAccountAdapter` apenas repassa chamadas ao `AccountRepository` |
+| Mapeamento duplo de entidades | `Account` (domínio) ↔ `AccountEntity` (JPA) com conversão manual em cada operação |
+| Estrutura de pacotes profunda | `application/port/input/`, `application/port/output/`, `infrastructure/adapter/persistence/` — dificulta leitura sem agregar valor |
+| Overhead de manutenção | Alterar um campo exige mudança em 4+ arquivos (domain model, entity, port, adapter) |
+
+> **Regra prática:** overengineering ocorre quando a complexidade da solução supera a complexidade do problema. Aqui, o problema tem 4 endpoints e 2 tabelas.
+
+## Decisão: Meio-termo consciente
+
+Foi adotada uma **arquitetura MVC em camadas com isolamento parcial de domínio**, que preserva os princípios essenciais sem o custo das abstrações desnecessárias:
+
+| Princípio | Hexagonal completo | Solução adotada |
+|---|---|---|
+| Domínio sem Spring | ✅ | ✅ (`domain/Account.java` sem anotações Spring) |
+| Regras de negócio isoladas | ✅ | ✅ (em `service/`, sem lógica nos controllers) |
+| Testabilidade | ✅ | ✅ (Mockito nos services, WebMvcTest nos controllers) |
+| Substituibilidade de banco | ✅ (via OutputPort) | ⚠️ (via Spring Data — troca de banco requer mudança mínima no `application.properties`) |
+| Múltiplos adapters de entrada | ✅ | ➖ (não necessário para este escopo) |
+| Número de arquivos | Alto | Reduzido |
+| Curva de leitura | Alta | Baixa |
+
+## Consequências
+
+**Positivas:**
+- Código mais direto e legível
+- Menos arquivos para navegar
+- Onboarding mais rápido
+- Foco nas regras de negócio e concorrência (objetivo real do teste)
+
+**Trade-offs aceitos:**
+- Sem interfaces de porta explícitas (acoplamento ao Spring Data é aceitável para este escopo)
+- Substituição de banco exige ajuste no `application.properties` e possível migration, não apenas troca de adapter
+
+---
+
+
 
 ## Arquitetura escolhida
 

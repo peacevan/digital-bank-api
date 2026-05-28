@@ -20,7 +20,7 @@ O objetivo do projeto é demonstrar boas práticas de desenvolvimento backend em
 
 O projeto deve demonstrar:
 
-* Arquitetura Hexagonal
+* Arquitetura MVC em camadas com isolamento de domínio
 * Separação de responsabilidades
 * Isolamento do domínio
 * Regras de negócio desacopladas do framework
@@ -42,7 +42,7 @@ O projeto deve demonstrar:
 | Persistência          | Spring Data JPA        |
 | Documentação          | Swagger / OpenAPI      |
 | Testes                | JUnit 5 + Mockito      |
-| Arquitetura           | Hexagonal Architecture |
+| Arquitetura           | MVC em camadas         |
 | Controle de Qualidade | Sonar-ready            |
 
 ---
@@ -201,82 +201,80 @@ Aplicar:
 
 # Arquitetura
 
-O projeto deve seguir Arquitetura Hexagonal (Ports and Adapters).
+> **Nota de decisão:** A especificação original previa Arquitetura Hexagonal (Ports and Adapters).
+> Após análise do escopo do projeto, a decisão foi revisada para adotar **MVC em camadas com isolamento de domínio**.
+> O registro completo da decisão e seus motivos está em [`ARCHITECTURE_DECISIONS.md`](ARCHITECTURE_DECISIONS.md).
+
+O projeto adota **arquitetura MVC em camadas**, mantendo isolamento do domínio sem o overhead de ports e adapters.
 
 ---
 
 ## Camadas
 
+### Controller
+
+Responsável por:
+
+* receber e validar requisições HTTP
+* retornar responses padronizados
+* delegar lógica ao Service
+
+Sem regras de negócio.
+
+---
+
+### Service
+
+Responsável por:
+
+* regras de negócio
+* orquestração das operações
+* controle transacional (`@Transactional`)
+* concorrência
+
+---
+
+### Repository
+
+Responsável por:
+
+* persistência via Spring Data JPA
+* consultas ao banco H2
+
+Sem regras de negócio.
+
+---
+
 ### Domain
 
 Responsável por:
 
-* entidades
-* regras de negócio
-* value objects
-* exceções de domínio
-
-### Regras
-
-* sem dependência do Spring
-* sem dependência de infraestrutura
-* núcleo da aplicação
+* modelo de domínio puro (`Account`)
+* sem dependências do Spring ou de infraestrutura
 
 ---
 
-### Application
+### Exception
 
 Responsável por:
 
-* casos de uso
-* orquestração
-* interfaces (ports)
-* regras de aplicação
-
-### Componentes
-
-* input ports
-* output ports
-* use cases
-* services
-
----
-
-### Infrastructure
-
-Responsável por:
-
-* controllers REST
-* persistência
-* adapters
-* banco de dados
-* mensageria
-* configuração do framework
-
-### Componentes
-
-* JPA repositories
-* entities
-* adapters
-* controllers
-* exception handlers
+* `GlobalExceptionHandler` centralizado
+* exceções de domínio tipadas (`AccountNotFoundException`, `InsufficientFundsException`, `InvalidTransferException`)
 
 ---
 
 # Fluxo de Transferência
 
+```
 HTTP Request
-→ Controller
-→ Input Port
-→ Use Case
-→ Domain Service
-→ Output Port
-→ Persistence Adapter
-→ Database
+→ Controller (validação de entrada)
+→ Service (regras de negócio + @Transactional)
+→ Repository (Spring Data JPA)
+→ Entity / H2 Database
 
 Após sucesso:
-
-→ Notification Adapter
+→ log.info("[NOTIFICATION] ...") — notificação simulada
+```
 
 ---
 
@@ -399,45 +397,6 @@ O foco principal do projeto é demonstrar:
 * arquitetura limpa
 * isolamento de domínio
 
----
-
-# Notas sobre ambiente de testes e dependências adicionais
-
-## Flapdoodle (Embedded MongoDB)
-
-Adicionamos a dependência de testes `de.flapdoodle.embed:de.flapdoodle.embed.mongo` para suportar cenários de integração que simulam um servidor MongoDB embarcado em testes (`scope=test`). A versão utilizada no projeto é `3.4.6`.
-
-Motivação: permitir testes de integração que dependam de um armazenamento compatível com MongoDB sem necessidade de um servidor externo.
-
-Impacto:
- - Esta dependência existe apenas em `test` scope e não afeta a runtime da aplicação.
- - Documente no pipeline CI que o ambiente de build precisa permitir downloads de artefatos do Maven Central.
-
-## Ajustes no Surefire / ambiente Windows
-
-Para evitar problemas observados com o mecanismo de attachment do ByteBuddy/Mockito em Windows durante os testes, o `pom.xml` foi atualizado com configurações do plugin Surefire:
-
-- `argLine`: `-Xmx768m`
-- `systemPropertyVariables`: `java.io.tmpdir=C:/temp`
-
-Recomendações ao executar os testes localmente ou em CI (Windows):
-
-- Certifique-se que o diretório `C:\temp` exista e seja gravável pelo processo de build.
-- Caso ocorram erros do tipo "Could not initialize inline Byte Buddy mock maker" execute Maven com `-Dnet.bytebuddy.agent.attacher.dump=C:/temp/bytebuddy-attach.log` para gerar logs de attach.
-- Como alternativa (mitigação), foi adicionada a dependência de teste `mockito-inline` para reduzir problemas de mock em alguns ambientes.
-
-## Como validar localmente
-
-1. Crie `C:\temp` (no Windows) se não existir.
-2. Execute:
-
-```bash
-mvn -DskipTests=false test
-```
-
-3. Se ocorrerem falhas relacionadas ao ByteBuddy/Mockito, veja `C:\temp\bytebuddy-attach.log` (se gerado) e considere executar com `-Dnet.bytebuddy.agent.attacher.dump=C:/temp/bytebuddy-attach.log`.
-
-Anote qualquer erro novo no checklist do projeto para triagem posterior.
 * consistência transacional
 * qualidade de código
 * capacidade de modelagem de sistemas financeiros
