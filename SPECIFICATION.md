@@ -398,6 +398,46 @@ O foco principal do projeto é demonstrar:
 * boas práticas backend
 * arquitetura limpa
 * isolamento de domínio
+
+---
+
+# Notas sobre ambiente de testes e dependências adicionais
+
+## Flapdoodle (Embedded MongoDB)
+
+Adicionamos a dependência de testes `de.flapdoodle.embed:de.flapdoodle.embed.mongo` para suportar cenários de integração que simulam um servidor MongoDB embarcado em testes (`scope=test`). A versão utilizada no projeto é `3.4.6`.
+
+Motivação: permitir testes de integração que dependam de um armazenamento compatível com MongoDB sem necessidade de um servidor externo.
+
+Impacto:
+ - Esta dependência existe apenas em `test` scope e não afeta a runtime da aplicação.
+ - Documente no pipeline CI que o ambiente de build precisa permitir downloads de artefatos do Maven Central.
+
+## Ajustes no Surefire / ambiente Windows
+
+Para evitar problemas observados com o mecanismo de attachment do ByteBuddy/Mockito em Windows durante os testes, o `pom.xml` foi atualizado com configurações do plugin Surefire:
+
+- `argLine`: `-Xmx768m`
+- `systemPropertyVariables`: `java.io.tmpdir=C:/temp`
+
+Recomendações ao executar os testes localmente ou em CI (Windows):
+
+- Certifique-se que o diretório `C:\temp` exista e seja gravável pelo processo de build.
+- Caso ocorram erros do tipo "Could not initialize inline Byte Buddy mock maker" execute Maven com `-Dnet.bytebuddy.agent.attacher.dump=C:/temp/bytebuddy-attach.log` para gerar logs de attach.
+- Como alternativa (mitigação), foi adicionada a dependência de teste `mockito-inline` para reduzir problemas de mock em alguns ambientes.
+
+## Como validar localmente
+
+1. Crie `C:\temp` (no Windows) se não existir.
+2. Execute:
+
+```bash
+mvn -DskipTests=false test
+```
+
+3. Se ocorrerem falhas relacionadas ao ByteBuddy/Mockito, veja `C:\temp\bytebuddy-attach.log` (se gerado) e considere executar com `-Dnet.bytebuddy.agent.attacher.dump=C:/temp/bytebuddy-attach.log`.
+
+Anote qualquer erro novo no checklist do projeto para triagem posterior.
 * consistência transacional
 * qualidade de código
 * capacidade de modelagem de sistemas financeiros
