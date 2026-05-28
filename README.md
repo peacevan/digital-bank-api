@@ -20,6 +20,8 @@ pip install -r requirements.txt
 python app.py
 ```
 
+> Observação: esta é uma simulação para testes (armazenamento em memória e servidor de desenvolvimento Flask), não indicada para produção.
+
 ## Executar testes
 
 ```bash
