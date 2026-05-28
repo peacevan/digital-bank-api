@@ -108,17 +108,52 @@ curl -X POST http://localhost:8080/transfers \
 
 ## Estratégia de Concorrência
 
-O sistema utiliza **Optimistic Locking** com `@Version` na entidade `AccountEntity`:
+O sistema foi projetado para suportar **alta concorrência** em transferências simultâneas para a mesma conta.
 
-- Cada conta possui um campo `version` gerenciado pelo Hibernate
-- Em transferências simultâneas, apenas uma transação vence; a outra recebe `409 Conflict` e pode ser reprocessada
-- A anotação `@Transactional` em `TransferService.transfer()` garante atomicidade: débito + crédito + registro ocorrem em uma única transação
+### Optimistic Locking (`@Version`)
+
+Cada `AccountEntity` possui um campo `version` gerenciado automaticamente pelo Hibernate:
+
+```java
+@Version
+private Long version; // incrementado a cada UPDATE
+```
+
+**Fluxo sob concorrência:**
+1. Thread A e Thread B leem a conta com `version = 0`
+2. Thread A faz commit primeiro → `version` vai para `1`
+3. Thread B tenta commit com `version = 0` → Hibernate detecta conflito e lança `ObjectOptimisticLockingFailureException`
+4. O `GlobalExceptionHandler` captura e retorna `409 Conflict` ao cliente
+5. O cliente pode retentar a operação com segurança
+
+### Atomicidade (`@Transactional`)
+
+O método `TransferService.transfer()` é anotado com `@Transactional`, garantindo que débito + crédito + registro da transferência ocorram em uma única transação atômica — ou tudo confirma, ou nada confirma.
+
+### Teste de Concorrência
+
+A classe `TransferConcurrencyTest` prova o mecanismo com **10 threads simultâneas**:
+
+```
+Conta origem:  R$ 1.000,00
+Conta destino: R$     0,00
+Threads:       10 × R$ 100,00 disparadas ao mesmo tempo (CountDownLatch)
+```
+
+**Invariantes verificadas após a execução:**
+
+| Invariante | Verificação |
+|---|---|
+| Conservação de valor | `saldoOrigem + saldoDestino == R$ 1.000` |
+| Sem double-spend | `saldoOrigem >= 0` e `saldoDestino >= 0` |
+| Ao menos 1 sucesso | `transferênciasConfirmadas > 0` |
+| Consistência exata | `saldoDestino == transferênciasConfirmadas × R$ 100` |
 
 ### Idempotência
 
-O header `Idempotency-Key` evita processamento duplicado:
+O header `Idempotency-Key` evita processamento duplicado em retentativas:
 - Na primeira requisição, o resultado (OK ou ERROR) é persistido na tabela `idempotency_keys`
-- Requisições repetidas com a mesma chave retornam o resultado cacheado sem processar novamente
+- Requisições repetidas com a mesma chave retornam o resultado cacheado sem reprocessar
 
 ---
 
