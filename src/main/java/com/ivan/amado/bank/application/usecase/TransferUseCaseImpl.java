@@ -7,6 +7,7 @@ import com.ivan.amado.bank.domain.model.Account;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -27,6 +28,7 @@ public class TransferUseCaseImpl implements TransferUseCase {
     }
 
     @Override
+    @Transactional
     public void transfer(UUID fromAccountId, UUID toAccountId, BigDecimal amount) {
         Objects.requireNonNull(fromAccountId, "fromAccountId is required");
         Objects.requireNonNull(toAccountId, "toAccountId is required");
