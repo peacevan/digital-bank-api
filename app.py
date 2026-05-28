@@ -30,9 +30,13 @@ def create_app() -> Flask:
 
     def parse_amount(data):
         amount = data.get("amount")
-        if amount is None or amount <= 0:
+        try:
+            amount = float(amount)
+        except (TypeError, ValueError):
             return None, (jsonify({"error": "amount must be greater than zero"}), 400)
-        return float(amount), None
+        if amount <= 0:
+            return None, (jsonify({"error": "amount must be greater than zero"}), 400)
+        return amount, None
 
     @app.post("/accounts")
     def create_account():
@@ -144,4 +148,4 @@ def create_app() -> Flask:
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

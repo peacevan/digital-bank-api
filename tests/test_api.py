@@ -35,7 +35,7 @@ class DigitalBankApiTestCase(unittest.TestCase):
         account = self.create_account("Carol", 20)
         response = self.client.post(f"/accounts/{account['id']}/withdraw", json={"amount": 30})
         self.assertEqual(response.status_code, 400)
-        self.assertIn("insufficient funds", response.get_json()["error"])
+        self.assertEqual(response.get_json()["error"], "insufficient funds")
 
     def test_transfer_between_accounts(self):
         from_account = self.create_account("Alice", 200)
