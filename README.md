@@ -48,7 +48,7 @@ Para inspecionar o banco em memória: **http://localhost:8080/h2-console**
 ./mvnw test
 ```
 
-Todos os 21 testes passam (unitários + integração com H2).
+Todos os 22 testes passam (unitários + integração com H2 + concorrência).
 
 ---
 
