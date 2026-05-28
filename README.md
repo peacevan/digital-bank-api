@@ -183,3 +183,13 @@ O header `Idempotency-Key` evita processamento duplicado em retentativas:
 | GlobalExceptionHandler | Centraliza tratamento de erros, retorna respostas padronizadas com timestamp e HTTP status |
 | DTOs separados do domínio | Evita acoplamento entre contrato de API e modelo interno |
 
+---
+
+## Evidências
+
+![Tabela de contas pré-carregadas](docs/evidences/tabela_conta.png)
+
+
+![Adicionando conta](docs/evidences/tabela_conta.png)
+
+

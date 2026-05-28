@@ -47,6 +47,10 @@ public class TransferController {
             HttpServletRequest httpRequest) {
 
         String idempotencyKey = httpRequest.getHeader("Idempotency-Key");
+        // Accept idempotency key from query parameter as fallback (some clients add it as ?Idempotency-Key=...)
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            idempotencyKey = httpRequest.getParameter("Idempotency-Key");
+        }
 
         if (idempotencyKey != null) {
             var cached = idempotencyRepository.findById(idempotencyKey);
