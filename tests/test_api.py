@@ -25,6 +25,11 @@ class DigitalBankApiTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_json()["error"], "initial_balance must be a valid number")
 
+    def test_create_account_with_negative_initial_balance(self):
+        response = self.client.post("/accounts", json={"name": "Alice", "initial_balance": -10})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["error"], "initial_balance cannot be negative")
+
     def test_deposit_and_withdraw(self):
         account = self.create_account("Bob", 100)
 
@@ -64,6 +69,11 @@ class DigitalBankApiTestCase(unittest.TestCase):
         statement = statement_response.get_json()
         self.assertEqual(len(statement["transactions"]), 1)
         self.assertEqual(statement["transactions"][0]["type"], "transfer")
+
+    def test_transfer_with_missing_account_ids(self):
+        response = self.client.post("/transfers", json={"amount": 10})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["error"], "from_account_id and to_account_id are required")
 
 
 if __name__ == "__main__":

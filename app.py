@@ -100,6 +100,8 @@ def create_app() -> Flask:
         data = request.get_json(silent=True) or {}
         from_id = data.get("from_account_id")
         to_id = data.get("to_account_id")
+        if from_id is None or to_id is None:
+            return jsonify({"error": "from_account_id and to_account_id are required"}), 400
         if from_id == to_id:
             return jsonify({"error": "from_account_id and to_account_id must be different"}), 400
 
@@ -151,4 +153,4 @@ def create_app() -> Flask:
 app = create_app()
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=False)
