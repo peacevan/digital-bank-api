@@ -75,6 +75,15 @@ class DigitalBankApiTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_json()["error"], "from_account_id and to_account_id are required")
 
+    def test_transfer_with_same_account_ids(self):
+        account = self.create_account("Alice", 100)
+        response = self.client.post(
+            "/transfers",
+            json={"from_account_id": account["id"], "to_account_id": account["id"], "amount": 10},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["error"], "from_account_id and to_account_id must be different")
+
 
 if __name__ == "__main__":
     unittest.main()

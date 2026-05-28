@@ -38,6 +38,15 @@ def create_app() -> Flask:
             return None, (jsonify({"error": "amount must be a valid number greater than zero"}), 400)
         return amount, None
 
+    def parse_account_id(value):
+        try:
+            account_id = int(value)
+        except (TypeError, ValueError):
+            return None
+        if account_id <= 0:
+            return None
+        return account_id
+
     @app.post("/accounts")
     def create_account():
         data = request.get_json(silent=True) or {}
@@ -98,8 +107,8 @@ def create_app() -> Flask:
     @app.post("/transfers")
     def transfer():
         data = request.get_json(silent=True) or {}
-        from_id = data.get("from_account_id")
-        to_id = data.get("to_account_id")
+        from_id = parse_account_id(data.get("from_account_id"))
+        to_id = parse_account_id(data.get("to_account_id"))
         if from_id is None or to_id is None:
             return jsonify({"error": "from_account_id and to_account_id are required"}), 400
         if from_id == to_id:
